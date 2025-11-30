@@ -143,9 +143,11 @@ class OffensiveAgent(CaptureAgent):
         return score
 
 class DefensiveAgent(CaptureAgent):
+    #Minimax con poda de alphabeta que minimiza el daño del atacante
     def __init__(self, index, time_for_computing=.1):
         super().__init__(index, time_for_computing)
         self.start = None
+        #Solo mira un turno hacia el futuro, ya que sino el tiempo de computo hacia que no fuera fluido
         self.depth = 1
 
     def register_initial_state(self, game_state):
@@ -238,6 +240,8 @@ class DefensiveAgent(CaptureAgent):
             min_food_dist = min([self.get_maze_distance(my_pos, food) for food in food_defending])
             features['food_defense_distance'] = min_food_dist
         features['scared'] = 1 if my_state.scared_timer > 0 else 0
+        #Pesos que hemos modificado para que obtenga el mejor resultado dado esta depth = 1
         weights = {'num_invaders': -50, 'invader_distance': -5, 'on_defense': 10, 'patrol_distance': -2.5, 'food_defense_distance': -0.25, 'capsule_defense_distance': -0.1, 'scared': -25}
         score = sum(features[key] * weights[key] for key in features.keys())
+
         return score
