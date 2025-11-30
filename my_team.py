@@ -49,9 +49,12 @@ class OffensiveAgent(CaptureAgent):
         legal_actions = game_state.get_legal_actions(self.index)
         if Directions.STOP in legal_actions and len(legal_actions) > 1:
             legal_actions.remove(Directions.STOP)
+            
         my_state = game_state.get_agent_state(self.index)
         my_pos = my_state.get_position()
         food_left = len(self.get_food(game_state).as_list())
+
+        #Definimos las condiciones para que el agente vuelva a su lado del campo de immediato
         if food_left <= 2:
             return self.get_action_to_home(game_state, legal_actions)
         if my_state.num_carrying >= 5:
@@ -65,6 +68,7 @@ class OffensiveAgent(CaptureAgent):
                 min_home_dist = min([self.get_maze_distance(my_pos, pos) for pos in boundary_positions])
                 if min_home_dist <= 5:
                     return self.get_action_to_home(game_state, legal_actions)
+                    
         best_action = None
         best_value = float('-inf')
         for action in legal_actions:
@@ -101,6 +105,7 @@ class OffensiveAgent(CaptureAgent):
         if my_pos is not None:
             my_pos = (int(my_pos[0]), int(my_pos[1]))
         score = 0
+        
         food_list = self.get_food(successor_state).as_list()
         carrying = my_state.num_carrying
         #Hemos añadido esta linea de codigo ya que veiamos que priorizaba recoger alrededor de 5 frutas siempre en lugar de ir poco a poco, cuando ya tenia diversas recolectadas. Esto causaba que tuviera que recorrer demasiado perdiendo la mayoria de veces por el camino
@@ -119,6 +124,8 @@ class OffensiveAgent(CaptureAgent):
             score -= len(food_list) * 12
         else:
             score -= len(food_list) * 2
+
+        #Utilizamos la ubicacion de los fantasmas para penalizar al pacman si se acerca a ellos, cuanto mas cerca mas lo penalizamos
         enemies = [successor_state.get_agent_state(i) for i in self.get_opponents(successor_state)]
         ghosts = [e for e in enemies if not e.is_pacman and e.get_position() is not None]
         if len(ghosts) > 0 and my_state.is_pacman:
@@ -136,10 +143,14 @@ class OffensiveAgent(CaptureAgent):
                     score -= 15
                 elif min_normal_dist <= 5:
                     score -= 0.5
+                    
+        #Penalizamos si el agente esta lejos de las capsulas que vuelven vulnerables a los fantasmas
         capsules = self.get_capsules(successor_state)
         if len(capsules) > 0 and len(ghosts) > 0:
             min_capsule_dist = min([self.get_maze_distance(my_pos, cap) for cap in capsules])
             score -= min_capsule_dist * 0.7
+
+        #Premiamos al agente por ser pacman, es decir por estar en campo enemigo
         if my_state.is_pacman:
             score += 1.2
         score += self.get_score(successor_state) * 50
@@ -179,12 +190,15 @@ class DefensiveAgent(CaptureAgent):
     def alpha_beta(self, game_state, depth, agent_index, alpha, beta):
         if game_state.is_over() or depth == 0:
             return self.evaluate_state(game_state)
+            
         agent_state = game_state.get_agent_state(agent_index)
         if agent_state.get_position() is None:
             return self.evaluate_state(game_state)
+            
         legal_actions = game_state.get_legal_actions(agent_index)
         if not legal_actions:
             return self.evaluate_state(game_state)
+            
         opponents = self.get_opponents(game_state)
         is_opponent = agent_index in opponents
         num_agents = game_state.get_num_agents()
@@ -220,11 +234,13 @@ class DefensiveAgent(CaptureAgent):
         features = util.Counter()
         my_state = game_state.get_agent_state(self.index)
         my_pos = my_state.get_position()
+        
         if my_pos is not None:
             my_pos = (int(my_pos[0]), int(my_pos[1]))
         enemies = [game_state.get_agent_state(i) for i in self.get_opponents(game_state)]
         invaders = [e for e in enemies if e.is_pacman and e.get_position() is not None]
         features['num_invaders'] = len(invaders)
+        
         if len(invaders) > 0:
             inv_positions = [(int(inv.get_position()[0]), int(inv.get_position()[1])) for inv in invaders]
             dists = [self.get_maze_distance(my_pos, pos) for pos in inv_positions]
@@ -237,17 +253,20 @@ class DefensiveAgent(CaptureAgent):
             if len(boundary_positions) > 0:
                 min_boundary_dist = min([self.get_maze_distance(my_pos, pos) for pos in boundary_positions])
                 features['patrol_distance'] = min_boundary_dist
+                
         features['on_defense'] = 1 if not my_state.is_pacman else 0
         food_defending = self.get_food_you_are_defending(game_state).as_list()
         if len(food_defending) > 0:
             min_food_dist = min([self.get_maze_distance(my_pos, food) for food in food_defending])
             features['food_defense_distance'] = min_food_dist
+            
         features['scared'] = 1 if my_state.scared_timer > 0 else 0
         #Pesos que hemos modificado para que obtenga el mejor resultado dado esta depth = 1
         weights = {'num_invaders': -50, 'invader_distance': -5, 'on_defense': 10, 'patrol_distance': -2.5, 'food_defense_distance': -0.25, 'capsule_defense_distance': -0.1, 'scared': -25}
         score = sum(features[key] * weights[key] for key in features.keys())
 
         return score
+
 
 
 
