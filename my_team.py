@@ -103,6 +103,7 @@ class OffensiveAgent(CaptureAgent):
         food_list = self.get_food(successor_state).as_list()
         carrying = my_state.num_carrying
         #Hemos añadido esta linea de codigo ya que veiamos que priorizaba recoger alrededor de 5 frutas siempre en lugar de ir poco a poco, cuando ya tenia diversas recolectadas. Esto causaba que tuviera que recorrer demasiado perdiendo la mayoria de veces por el camino
+        #Es decir: si Pacman lleva mucha comida encima, el peso de buscar más comida baja drásticamente.
         if len(food_list) > 0:
             min_food_dist = min([self.get_maze_distance(my_pos, food) for food in food_list])
             if carrying >= 10:
@@ -246,4 +247,5 @@ class DefensiveAgent(CaptureAgent):
         score = sum(features[key] * weights[key] for key in features.keys())
 
         return score
+
 
