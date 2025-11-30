@@ -35,7 +35,7 @@ def create_team(first_index, second_index, is_red, first='OffensiveAgent', secon
 ##########
 
 class OffensiveAgent(CaptureAgent):
-
+    #Utiliza un algoritmo greedy com look de un paso, mira las acciones posibles siguientes evalua el estado resultante y elige segun el que tenga mejor puntuación
     def __init__(self, index, time_for_computing=.1):
         super().__init__(index, time_for_computing)
         self.start = None
@@ -102,6 +102,7 @@ class OffensiveAgent(CaptureAgent):
         score = 0
         food_list = self.get_food(successor_state).as_list()
         carrying = my_state.num_carrying
+        #Hemos añadido esta linea de codigo ya que veiamos que priorizaba recoger alrededor de 5 frutas siempre en lugar de ir poco a poco, cuando ya tenia diversas recolectadas. Esto causaba que tuviera que recorrer demasiado perdiendo la mayoria de veces por el camino
         if len(food_list) > 0:
             min_food_dist = min([self.get_maze_distance(my_pos, food) for food in food_list])
             if carrying >= 10:
@@ -245,3 +246,4 @@ class DefensiveAgent(CaptureAgent):
         score = sum(features[key] * weights[key] for key in features.keys())
 
         return score
+
