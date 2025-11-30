@@ -74,7 +74,8 @@ class OffensiveAgent(CaptureAgent):
                 best_value = value
                 best_action = action
         return best_action if best_action else random.choice(legal_actions)
-
+        
+    #Utilizamos un algoritmo BFS de vuelta a casa para volver a su lado lo mas rapido posible
     def get_action_to_home(self, game_state, legal_actions):
         my_pos = game_state.get_agent_position(self.index)
         boundary_x = game_state.data.layout.width // 2
@@ -247,5 +248,6 @@ class DefensiveAgent(CaptureAgent):
         score = sum(features[key] * weights[key] for key in features.keys())
 
         return score
+
 
 
